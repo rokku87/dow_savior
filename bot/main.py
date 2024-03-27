@@ -1,12 +1,15 @@
 # bot/main.py
+
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from flask import Flask, request, abort
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from api.line_api import reply_message
 from linebot.v3.messaging import Configuration
-import os
-import sys
+from api.line_api import reply_message
 
 print("Current working directory:", os.getcwd())
 app = Flask(__name__)
