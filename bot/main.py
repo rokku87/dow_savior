@@ -9,6 +9,7 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.messaging import Configuration
 from api.line_api import reply_message, send_message
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 scheduler = BackgroundScheduler()
@@ -34,25 +35,32 @@ def handle_message(event):
     if id:
         user_ids.add(id)  # 假设 user_ids 用于存储个人和群组的 ID
 
+##以下開始任務
     if event.message.text == "救救啟瑞":
         start_scheduled_task()
         reply_text = "任務啟動。"
     else:
-        reply_text = "請輸入'救救啟瑞'以开始任务。"
+        reply_text = "請輸入'救救啟瑞'以開始任務。"
 
     reply_message(channel_access_token, event.reply_token, reply_text, configuration)
 
 def start_scheduled_task():
     global job
     if job is None:
-        job = scheduler.add_job(send_confirmation_message, 'interval', minutes=1)
+        job = scheduler.add_job(send_confirmation_message, 'interval', seconds=30)  # 修改為每30秒觸發
         if not scheduler.running:
             scheduler.start()
 
 def send_confirmation_message():
-    message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒(0/1)\n是/否"
-    for user_id in user_ids:
-        send_message(channel_access_token, user_id, message_text)
+    global next_message_time
+    now = datetime.now()
+    
+    if 'next_message_time' not in globals() or now >= next_message_time:
+        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒(0/1)"
+        for user_id in user_ids:
+            send_message(channel_access_token, user_id, message_text)
+        next_message_time = now + timedelta(seconds=30)  # 更新下次發送時間
+
 
 @app.route("/callback", methods=['POST'])
 def callback():
