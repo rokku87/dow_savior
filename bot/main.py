@@ -52,7 +52,7 @@ def start_scheduled_task():
 def send_confirmation_message():
     message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒(0/1)\n是/否"
     for user_id in user_ids:
-        send_message(channel_access_token, user_id, message_text, configuration)
+        send_message(channel_access_token, user_id, message_text)
 
 @app.route("/callback", methods=['POST'])
 def callback():
