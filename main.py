@@ -1,10 +1,13 @@
-import os
 from flask import Flask, request, abort
-from linebot.v3.messaging import Configuration, MessagingApi
-from linebot.v3.webhook import WebhookHandler
+from linebot import (
+    LineBotApi,
+    WebhookHandler
+)
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.exceptions import InvalidSignatureError
+import os
 
+app = Flask(__name__)
 
 # 获取环境变量
 channel_access_token = os.getenv('CHANNEL_ACCESS_TOKEN')
@@ -15,11 +18,8 @@ if channel_access_token is None or channel_secret is None:
     print("CHANNEL_ACCESS_TOKEN or CHANNEL_SECRET is not set")
     exit(1)
 
-app = Flask(__name__)
-
-# 使用 v3 的 Configuration 来配置 LINE Bot API
-config = Configuration(channel_access_token=channel_access_token)
-line_bot_api = MessagingApi(config)
+# 初始化 LINE Bot API
+line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 @app.route("/callback", methods=['POST'])
