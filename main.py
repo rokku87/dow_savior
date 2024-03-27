@@ -1,13 +1,14 @@
+import os
 from flask import Flask, request, abort
 from linebot.v3.messaging import Configuration, MessagingApi
 from linebot.v3.webhook import WebhookHandler
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.exceptions import InvalidSignatureError
-import os
+
 
 # 获取环境变量
-channel_access_token = os.getenv('ufdDe3WCWTcMV7yIQmjTTKKGt8UlWpnZi+sOBrabUwkIs6QoxJnhALI1i1aU4hLxtVEdohVNvO/zRaUWEQCcJN4uz3Nw5zldfsgQKKSLyTbfYz4GcXneFk2bjZ4520Sz+fl9g78vYCgNbyf/RcwbpAdB04t89/1O/w1cDnyilFU=')
-channel_secret = os.getenv('7582ea5da01404fa64dbfaec80867cbd')
+channel_access_token = os.getenv('CHANNEL_ACCESS_TOKEN')
+channel_secret = os.getenv('CHANNEL_SECRET')
 
 # 确保环境变量正确设置
 if channel_access_token is None or channel_secret is None:
