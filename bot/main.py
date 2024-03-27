@@ -23,8 +23,16 @@ handler = WebhookHandler(channel_secret)
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
-    user_id = event.source.user_id
-    user_ids.add(user_id)  # 保存用户的 userId
+    # 检查事件是来自个人还是群组
+    if event.source.type == 'user':
+        id = event.source.user_id
+    elif event.source.type == 'group':
+        id = event.source.group_id
+    else:
+        id = None
+
+    if id:
+        user_ids.add(id)  # 假设 user_ids 用于存储个人和群组的 ID
 
     if event.message.text == "救救啟瑞":
         start_scheduled_task()

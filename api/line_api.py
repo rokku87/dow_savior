@@ -17,7 +17,7 @@ def send_message(channel_access_token, user_id, message_text, configuration):
     # 使用给定的配置创建 API 客户端
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
-        # 创建消息对象
+        # 创建 TextSendMessage 对象
         message = TextSendMessage(text=message_text)
-        # 调用 LINE Messaging API 发送消息
-        line_bot_api.push_message(user_id, message)
+        # 调用 push_message 方法发送消息
+        line_bot_api.push_message(user_id, messages=[message])
