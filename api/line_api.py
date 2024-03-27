@@ -18,3 +18,4 @@ def send_message(channel_access_token, user_id, message_text, configuration):
         line_bot_api = MessagingApi(api_client)
         message = TextSendMessage(text=message_text)  # 创建文本消息对象
         line_bot_api.push_message(user_id, [message])  # 注意：第二个参数是消息对象的列表
+##########
