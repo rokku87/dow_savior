@@ -11,28 +11,21 @@ from linebot.v3.messaging import Configuration
 from api.line_api import reply_message, send_message
 
 app = Flask(__name__)
+scheduler = BackgroundScheduler()
+job = None  # 用于跟踪定时任务
+
+user_ids = set()  # 存储互动过的用户的 userId
 
 channel_access_token = os.getenv('CHANNEL_ACCESS_TOKEN')
 channel_secret = os.getenv('CHANNEL_SECRET')
 configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
 
-scheduler = BackgroundScheduler()
-job = None  # 用于跟踪定时任务
-
-def start_scheduled_task():
-    global job
-    if job is None:
-        job = scheduler.add_job(send_confirmation_message, 'interval', minutes=1)
-        scheduler.start()
-
-def send_confirmation_message():
-    user_id = 'leisure_rock'
-    message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒(0/1)\n是/否"
-    send_message(channel_access_token, user_id, message_text, configuration)
-
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    user_id = event.source.user_id
+    user_ids.add(user_id)  # 保存用户的 userId
+
     if event.message.text == "救救啟瑞":
         start_scheduled_task()
         reply_text = "任務啟動。"
@@ -40,6 +33,18 @@ def handle_message(event):
         reply_text = "請輸入'救救啟瑞'以开始任务。"
 
     reply_message(channel_access_token, event.reply_token, reply_text, configuration)
+
+def start_scheduled_task():
+    global job
+    if job is None:
+        job = scheduler.add_job(send_confirmation_message, 'interval', minutes=1)
+        if not scheduler.running:
+            scheduler.start()
+
+def send_confirmation_message():
+    message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒(0/1)\n是/否"
+    for user_id in user_ids:
+        send_message(channel_access_token, user_id, message_text, configuration)
 
 @app.route("/callback", methods=['POST'])
 def callback():
