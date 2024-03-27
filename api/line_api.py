@@ -1,7 +1,7 @@
 # api/line_api.py
 from linebot.models import TextSendMessage
 from linebot.v3.messaging import ApiClient, MessagingApi, ReplyMessageRequest, TextMessage
-from linebot.v3.models import TextSendMessage
+from linebot.models import TextSendMessage
 
 def reply_message(token, reply_token, message_text, config):
     with ApiClient(config) as api_client:
