@@ -6,7 +6,9 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from api.line_api import reply_message
 from linebot.v3.messaging import Configuration
 import os
+import sys
 
+print("Current working directory:", os.getcwd())
 app = Flask(__name__)
 
 channel_access_token = os.getenv('CHANNEL_ACCESS_TOKEN')
