@@ -8,25 +8,28 @@ from linebot.v3.webhook import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.messaging import Configuration
-from api.line_api import reply_message, send_message  # 确保 send_message 函数是可用的
-
-print("Current working directory:", os.getcwd())
+from api.line_api import reply_message, send_message
 
 app = Flask(__name__)
-scheduler = BackgroundScheduler()
-job = None  # 用于跟踪是否已经启动了定时任务
 
 channel_access_token = os.getenv('CHANNEL_ACCESS_TOKEN')
 channel_secret = os.getenv('CHANNEL_SECRET')
 configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
 
+scheduler = BackgroundScheduler()
+job = None  # 用于跟踪定时任务
+
 def start_scheduled_task():
     global job
-    if job is None:  # 确保只启动一次定时任务
-        job = scheduler.add_job(send_confirmation_message, 'interval', minutes=1)  # 测试时每分钟发送一次
-        if not scheduler.running:  # 如果调度器未运行，则启动调度器
-            scheduler.start()
+    if job is None:
+        job = scheduler.add_job(send_confirmation_message, 'interval', minutes=1)
+        scheduler.start()
+
+def send_confirmation_message():
+    user_id = 'leisure_rock'
+    message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒(0/1)\n是/否"
+    send_message(channel_access_token, user_id, message_text, configuration)
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
@@ -34,19 +37,9 @@ def handle_message(event):
         start_scheduled_task()
         reply_text = "任務啟動。"
     else:
-        reply_text = "請輸入'救救啟瑞'已開始任務。"
+        reply_text = "請輸入'救救啟瑞'以开始任务。"
 
     reply_message(channel_access_token, event.reply_token, reply_text, configuration)
-
-
-def send_confirmation_message():
-    user_id = 'YOUR_USER_OR_GROUP_ID'
-    message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒(0/1)\n是/否"
-    send_message(channel_access_token, user_id, message_text, configuration)
-
-scheduler = BackgroundScheduler()
-scheduler.add_job(send_confirmation_message, 'interval', minutes=1)  # 测试时每分钟发送一次
-scheduler.start()
 
 @app.route("/callback", methods=['POST'])
 def callback():
