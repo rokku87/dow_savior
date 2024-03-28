@@ -73,9 +73,9 @@ def send_task_message(user_id, task):
     global next_message_time
     message_text = ""
     if task == "task1":
-        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└─任務一、啟瑞今天看房沒?(0/1)"
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務一、啟瑞今天看房沒?(0/1)"
     elif task == "task2":
-        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└─任務二、啟瑞今天付訂沒?(0/1)"
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務一、啟瑞今天看房沒?(1/1)\n└─任務二、啟瑞今天付訂沒?(0/1)"
 
     confirm_template = ConfirmTemplate(text=message_text, actions=[
         MessageAction(label="是", text="是"),
