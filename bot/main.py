@@ -41,7 +41,7 @@ def handle_message(event):
 
     if event.message.text == "救救啟瑞" and not task_active:
         task_active = True
-        next_message_time = datetime.now() + timedelta(seconds=30)
+        next_message_time = datetime.now() + timedelta(seconds=5)
         reply_text = "任務啟動。"
         reply_message(channel_access_token, event.reply_token, reply_text)
     elif event.message.text == "是" and task_active:
@@ -81,7 +81,7 @@ def handle_message(event):
         )
         for user_id in user_ids:
             send_message(channel_access_token, user_id, template_message)
-        next_message_time = datetime.now() + timedelta(seconds=30)
+        next_message_time = datetime.now() + timedelta(seconds=5)
     elif not task_active:
         reply_text = "請輸入'救救啟瑞'以開始任務。"
         reply_message(channel_access_token, event.reply_token, reply_text)
