@@ -24,19 +24,16 @@ task_active = False
 current_task = None
 next_message_time = None
 
-def auto_start_task():
+def check_and_send_task():
     global task_active, current_task, next_message_time
     now = datetime.now()
-    if now.hour >= 12 and not task_active:  # 自動開啟任務
-        task_active = True
-        current_task = "task1"
-        next_message_time = now + timedelta(seconds=5)  # 這裡設定為5秒僅用於測試
-        for user_id in user_ids:
-            send_task_message(user_id, current_task)
+    if task_active and now >= next_message_time:
+        send_task_message(current_task)
+        next_message_time = now + timedelta(seconds=5)  # Adjust this for actual timing
 
-@scheduler.scheduled_job('cron', hour=12)
-def scheduled_start_task():
-    auto_start_task()
+@scheduler.scheduled_job('interval', seconds=5)
+def scheduled_check_and_send_task():
+    check_and_send_task()
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
@@ -51,14 +48,11 @@ def handle_message(event):
         current_task = "task1"
         next_message_time = datetime.now() + timedelta(seconds=5)
         reply_message(channel_access_token, event.reply_token, "任務啟動。")
-        send_task_message(user_id, current_task)
+        send_task_message(current_task)
     elif event.message.text == "是" and task_active:
         if current_task == "task1":
             current_task = "task2"
-            send_task_message(user_id, current_task)
-        elif current_task == "task2":
-            # 可以在這裡添加任務三的邏輯
-            pass
+        send_task_message(current_task)
     elif event.message.text == "否" and task_active:
         task_active = False
         current_task = None
@@ -69,21 +63,21 @@ def handle_message(event):
         next_message_time = None
         reply_message(channel_access_token, event.reply_token, "任務已停止。")
 
-def send_task_message(user_id, task):
-    global next_message_time
+def send_task_message(task):
+    global user_ids, channel_access_token
     message_text = ""
     if task == "task1":
-        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務一、啟瑞今天看房沒?(0/1)"
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└─任務一、啟瑞今天看房沒?(0/1)"
     elif task == "task2":
-        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務一、啟瑞今天看房沒?(1/1)\n└─任務二、啟瑞今天付訂沒?(0/1)"
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└─任務二、啟瑞今天付訂沒?(0/1)"
 
     confirm_template = ConfirmTemplate(text=message_text, actions=[
         MessageAction(label="是", text="是"),
         MessageAction(label="否", text="否")
     ])
     template_message = TemplateSendMessage(alt_text='確認訊息', template=confirm_template)
-    send_message(channel_access_token, user_id, template_message)
-    next_message_time = datetime.now() + timedelta(seconds=5)  # 之後改為一小時
+    for user_id in user_ids:
+        send_message(channel_access_token, user_id, template_message)
 
 if not scheduler.running:
     scheduler.start()
