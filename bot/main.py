@@ -24,28 +24,51 @@ channel_secret = os.getenv('CHANNEL_SECRET')
 configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
 
+task_active = False
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    global task_active
+
     if event.source.type == 'user':
-        id = event.source.user_id
+        user_id = event.source.user_id
     elif event.source.type == 'group':
-        id = event.source.group_id
+        user_id = event.source.group_id
     else:
-        id = None
+        user_id = None
 
-    if id:
-        user_ids.add(id)
+    if user_id:
+        user_ids.add(user_id)
 
-    if event.message.text == "救救啟瑞":
+    if event.message.text == "救救啟瑞" and not task_active:
+        task_active = True
         start_scheduled_task()
         reply_text = "任務啟動。"
         reply_message(channel_access_token, event.reply_token, reply_text, configuration)
+    elif event.message.text == "是" and task_active:
+        # 這裡發送下一個任務的確認訊息
+        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務二、啟瑞今天看房沒(0/1)?"
+        confirm_template = ConfirmTemplate(
+            text=message_text,
+            actions=[
+                MessageAction(label="是", text="是"),
+                MessageAction(label="否", text="否")
+            ]
+        )
+        template_message = TemplateSendMessage(
+            alt_text='確認訊息', template=confirm_template
+        )
+        send_message(channel_access_token, user_id, template_message)
+    elif event.message.text == "否" and task_active:
+        # 這裡回覆任務失敗的訊息
+        task_active = False  # 任務結束，重置標誌
+        reply_text = "任務失敗-啟瑞還在輪迴之中受難"
+        reply_message(channel_access_token, event.reply_token, reply_text, configuration)
+    elif task_active:
+        # 如果任務已啟動，忽略其他訊息
+        pass
     else:
         reply_text = "請輸入'救救啟瑞'以開始任務。"
         reply_message(channel_access_token, event.reply_token, reply_text, configuration)
-
-
-
 
 
 def start_scheduled_task():
