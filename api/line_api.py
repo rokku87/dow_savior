@@ -27,4 +27,5 @@ def send_message(channel_access_token, user_id, message_text):
             ]
         )
     )
-    line_bot_api.push_message(user_id, confirm_template_message)
+    line_bot_api.push_message(user_id, messages=[confirm_template_message])
+
