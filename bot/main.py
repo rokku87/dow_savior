@@ -1,5 +1,6 @@
 import os
 import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from datetime import datetime, timedelta
 from linebot import LineBotApi
 from linebot.models import TemplateSendMessage, ConfirmTemplate, MessageAction, TextSendMessage
@@ -10,7 +11,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.messaging import Configuration
 from api.line_api import reply_message, send_message
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 app = Flask(__name__)
 
