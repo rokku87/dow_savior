@@ -43,9 +43,8 @@ def handle_message(event):
         task_active = True
         start_scheduled_task()
         reply_text = "任務啟動。"
-        reply_message(channel_access_token, event.reply_token, reply_text, configuration)
+        reply_message(channel_access_token, event.reply_token, reply_text)
     elif event.message.text == "是" and task_active:
-        # 這裡發送下一個任務的確認訊息
         message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務二、啟瑞今天看房沒(0/1)?"
         confirm_template = ConfirmTemplate(
             text=message_text,
@@ -59,16 +58,12 @@ def handle_message(event):
         )
         send_message(channel_access_token, user_id, template_message)
     elif event.message.text == "否" and task_active:
-        # 這裡回覆任務失敗的訊息
-        task_active = False  # 任務結束，重置標誌
+        task_active = False
         reply_text = "任務失敗-啟瑞還在輪迴之中受難"
-        reply_message(channel_access_token, event.reply_token, reply_text, configuration)
-    elif task_active:
-        # 如果任務已啟動，忽略其他訊息
-        pass
-    else:
+        reply_message(channel_access_token, event.reply_token, reply_text)
+    elif not task_active:
         reply_text = "請輸入'救救啟瑞'以開始任務。"
-        reply_message(channel_access_token, event.reply_token, reply_text, configuration)
+        reply_message(channel_access_token, event.reply_token, reply_text)
 
 
 def start_scheduled_task():
@@ -103,6 +98,7 @@ def send_confirmation_message():
         next_message_time = now + timedelta(seconds=30)  # 更新下次發送時間
 
 
+##這邊不動
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
