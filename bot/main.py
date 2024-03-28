@@ -1,9 +1,9 @@
 import os
 import sys
 from datetime import datetime, timedelta
+from flask import Flask, request, abort
 from linebot import LineBotApi
 from linebot.models import TemplateSendMessage, ConfirmTemplate, MessageAction, TextSendMessage
-from flask import Flask, request, abort
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
@@ -13,8 +13,7 @@ from api.line_api import reply_message, send_message
 
 app = Flask(__name__)
 
-user_ids = set()  # 存储互动过的用户的 userId
-
+user_ids = set()
 channel_access_token = os.getenv('CHANNEL_ACCESS_TOKEN')
 channel_secret = os.getenv('CHANNEL_SECRET')
 handler = WebhookHandler(channel_secret)
@@ -41,6 +40,10 @@ def handle_message(event):
     elif text == "關閉" and task_active:
         stop_task(user_id, event.reply_token)
 
+    # Check if it's time to send the next task message
+    if task_active and datetime.now() >= next_message_time:
+        send_task_message(user_id, current_task)
+
 def start_task(user_id, reply_token):
     global task_active, next_message_time, current_task
     task_active = True
@@ -50,10 +53,14 @@ def start_task(user_id, reply_token):
     send_task_message(user_id, current_task)
 
 def proceed_task(user_id):
-    global current_task
+    global current_task, next_message_time
     if current_task == "task1":
         current_task = "task2"
-        send_task_message(user_id, current_task)
+    elif current_task == "task2":
+        current_task = None  # Reset task if needed or proceed to next task
+        task_active = False  # Stop tasks if the final task is completed
+    send_task_message(user_id, current_task)
+    next_message_time = datetime.now() + timedelta(seconds=5)
 
 def fail_task(user_id, reply_token):
     global task_active, current_task
@@ -70,6 +77,9 @@ def stop_task(user_id, reply_token):
 
 def send_task_message(user_id, task):
     global next_message_time
+    if not task:
+        return
+
     message_text = ""
     if task == "task1":
         message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└─任務一、啟瑞今天看房沒?(0/1)"
@@ -82,7 +92,7 @@ def send_task_message(user_id, task):
     ])
     template_message = TemplateSendMessage(alt_text='確認訊息', template=confirm_template)
     send_message(channel_access_token, user_id, template_message)
-    next_message_time = datetime.now() + timedelta(seconds=5)
+    next_message_time = datetime.now() + timedelta(seconds=5)  # Adjust timing as necessary
 
 ##-----------------------------------------------------這邊不動---------------------------------------------------------
 @app.route("/callback", methods=['POST'])
