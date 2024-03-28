@@ -1,91 +1,92 @@
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from datetime import datetime, timedelta
+from apscheduler.schedulers.background import BackgroundScheduler
 from linebot import LineBotApi
 from linebot.models import TemplateSendMessage, ConfirmTemplate, MessageAction, TextSendMessage
 from flask import Flask, request, abort
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from linebot.v3.messaging import Configuration
-from api.line_api import reply_message, send_message
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from api.line_api import reply_message, send_message
 
 app = Flask(__name__)
-
-user_ids = set()  # 存储互动过的用户的 userId
+scheduler = BackgroundScheduler()
+user_ids = set()
 
 channel_access_token = os.getenv('CHANNEL_ACCESS_TOKEN')
 channel_secret = os.getenv('CHANNEL_SECRET')
-configuration = Configuration(access_token=channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 task_active = False
+current_task = None
 next_message_time = None
+
+def auto_start_task():
+    global task_active, current_task, next_message_time
+    now = datetime.now()
+    if now.hour >= 12 and not task_active:  # 自動開啟任務
+        task_active = True
+        current_task = "task1"
+        next_message_time = now + timedelta(seconds=5)  # 這裡設定為5秒僅用於測試
+        for user_id in user_ids:
+            send_task_message(user_id, current_task)
+
+@scheduler.scheduled_job('cron', hour=12)
+def scheduled_start_task():
+    auto_start_task()
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
-    global task_active, next_message_time
+    global task_active, current_task, next_message_time
 
-    if event.source.type == 'user':
-        user_id = event.source.user_id
-    elif event.source.type == 'group':
-        user_id = event.source.group_id
-    else:
-        user_id = None
-
+    user_id = event.source.user_id if event.source.type in ['user', 'group'] else None
     if user_id:
         user_ids.add(user_id)
 
     if event.message.text == "救救啟瑞" and not task_active:
         task_active = True
+        current_task = "task1"
         next_message_time = datetime.now() + timedelta(seconds=5)
-        reply_text = "任務啟動。"
-        reply_message(channel_access_token, event.reply_token, reply_text)
-
-        # 立即發送任務一的確認訊息
-        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└─任務一、啟瑞今天看房沒?(0/1)"
-        confirm_template = ConfirmTemplate(
-            text=message_text,
-            actions=[
-                MessageAction(label="是", text="是"),
-                MessageAction(label="否", text="否")
-            ]
-        )
-        template_message = TemplateSendMessage(
-            alt_text='確認訊息', template=confirm_template
-        )
-        send_message(channel_access_token, user_id, template_message)
-        
+        reply_message(channel_access_token, event.reply_token, "任務啟動。")
+        send_task_message(user_id, current_task)
+    elif event.message.text == "是" and task_active:
+        if current_task == "task1":
+            current_task = "task2"
+            send_task_message(user_id, current_task)
+        elif current_task == "task2":
+            # 可以在這裡添加任務三的邏輯
+            pass
     elif event.message.text == "否" and task_active:
         task_active = False
-        reply_text = "任務失敗-啟瑞還在輪迴之中受難"
-        reply_message(channel_access_token, event.reply_token, reply_text)
+        current_task = None
+        reply_message(channel_access_token, event.reply_token, "任務失敗-啟瑞還在輪迴之中受難")
     elif event.message.text == "關閉" and task_active:
         task_active = False
+        current_task = None
         next_message_time = None
-        reply_text = "任務已停止。"
-        reply_message(channel_access_token, event.reply_token, reply_text)
-    elif task_active and datetime.now() >= next_message_time:
-        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└任務一、啟瑞今天看房沒?(0/1)"
-        confirm_template = ConfirmTemplate(
-            text=message_text,
-            actions=[
-                MessageAction(label="是", text="是"),
-                MessageAction(label="否", text="否")
-            ]
-        )
-        template_message = TemplateSendMessage(
-            alt_text='確認訊息', template=confirm_template
-        )
-        for user_id in user_ids:
-            send_message(channel_access_token, user_id, template_message)
-        next_message_time = datetime.now() + timedelta(seconds=5)
-    elif not task_active:
-        reply_text = "請輸入'救救啟瑞'以開始任務。"
-        reply_message(channel_access_token, event.reply_token, reply_text)
+        reply_message(channel_access_token, event.reply_token, "任務已停止。")
+
+def send_task_message(user_id, task):
+    global next_message_time
+    message_text = ""
+    if task == "task1":
+        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└─任務一、啟瑞今天看房沒?(0/1)"
+    elif task == "task2":
+        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└─任務二、啟瑞今天付訂沒?(0/1)"
+
+    confirm_template = ConfirmTemplate(text=message_text, actions=[
+        MessageAction(label="是", text="是"),
+        MessageAction(label="否", text="否")
+    ])
+    template_message = TemplateSendMessage(alt_text='確認訊息', template=confirm_template)
+    send_message(channel_access_token, user_id, template_message)
+    next_message_time = datetime.now() + timedelta(seconds=5)  # 之後改為一小時
+
+if not scheduler.running:
+    scheduler.start()
 
 
 ##-----------------------------------------------------這邊不動---------------------------------------------------------
