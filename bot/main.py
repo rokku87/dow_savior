@@ -24,7 +24,7 @@ handler = WebhookHandler(channel_secret)
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
-    # 检查事件是来自个人还是群组
+    # 檢查事件是來自個人還是群組
     if event.source.type == 'user':
         id = event.source.user_id
     elif event.source.type == 'group':
@@ -33,21 +33,22 @@ def handle_message(event):
         id = None
 
     if id:
-        user_ids.add(id)  # 假设 user_ids 用于存储个人和群组的 ID
+        user_ids.add(id)  # 假設 user_ids 用於存儲個人和群組的 ID
 
-##以下開始任務
     if event.message.text == "救救啟瑞":
         start_scheduled_task()
         reply_text = "任務啟動。"
+        reply_message(channel_access_token, event.reply_token, reply_text, configuration)
     else:
         reply_text = "請輸入'救救啟瑞'以開始任務。"
-
-    reply_message(channel_access_token, event.reply_token, reply_text, configuration)
+        # 使用reply_message函數回覆純文字訊息
+        line_bot_api = LineBotApi(channel_access_token)
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
 
 def start_scheduled_task():
     global job
     if job is None:
-        job = scheduler.add_job(send_confirmation_message, 'interval', seconds=30)  # 修改為每30秒觸發
+        job = scheduler.add_job(send_confirmation_message, 'interval', seconds=5)  # 修改為每30秒觸發
         if not scheduler.running:
             scheduler.start()
 
@@ -56,7 +57,7 @@ def send_confirmation_message():
     now = datetime.now()
     if 'next_message_time' not in globals():
         global next_message_time
-        next_message_time = now + timedelta(seconds=10)  # 首次發送，設定為10秒後
+        next_message_time = now + timedelta(seconds=5)  # 首次發送，設定為10秒後
 
     if now >= next_message_time:
         message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒?"
