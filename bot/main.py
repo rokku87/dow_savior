@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+from linebot.models import TemplateSendMessage, ConfirmTemplate, MessageAction
 from flask import Flask, request, abort
 from apscheduler.schedulers.background import BackgroundScheduler
 from linebot.v3.webhook import WebhookHandler
@@ -51,14 +51,28 @@ def start_scheduled_task():
         if not scheduler.running:
             scheduler.start()
 
+
 def send_confirmation_message():
-    global next_message_time
     now = datetime.now()
-    
-    if 'next_message_time' not in globals() or now >= next_message_time:
-        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒(0/1)"
+    if 'next_message_time' not in globals():
+        global next_message_time
+        next_message_time = now + timedelta(seconds=30)  # 首次發送，設定為30秒後
+
+    if now >= next_message_time:
+        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒?"
+        confirm_template = ConfirmTemplate(
+            text=message_text,
+            actions=[
+                MessageAction(label="是", text="是"),
+                MessageAction(label="否", text="否")
+            ]
+        )
+        template_message = TemplateSendMessage(
+            alt_text='確認訊息', template=confirm_template
+        )
         for user_id in user_ids:
-            send_message(channel_access_token, user_id, message_text)
+            send_message(channel_access_token, user_id, template_message)
+
         next_message_time = now + timedelta(seconds=30)  # 更新下次發送時間
 
 
