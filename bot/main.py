@@ -44,9 +44,9 @@ def handle_message(event):
         next_message_time = datetime.now() + timedelta(seconds=5)
         reply_text = "任務啟動。"
         reply_message(channel_access_token, event.reply_token, reply_text)
-    elif event.message.text == "是" and task_active:
-        # 任務二開始
-        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└─任務一、啟瑞今天看房沒?(1/1)\n└──任務二、啟瑞今天付訂沒?(0/1)"
+
+        # 立即發送任務一的確認訊息
+        message_text = "任務-啟瑞逃離華奴腐儒輪迴\n└─任務一、啟瑞今天看房沒?(0/1)"
         confirm_template = ConfirmTemplate(
             text=message_text,
             actions=[
@@ -58,6 +58,7 @@ def handle_message(event):
             alt_text='確認訊息', template=confirm_template
         )
         send_message(channel_access_token, user_id, template_message)
+        
     elif event.message.text == "否" and task_active:
         task_active = False
         reply_text = "任務失敗-啟瑞還在輪迴之中受難"
