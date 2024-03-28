@@ -26,7 +26,6 @@ handler = WebhookHandler(channel_secret)
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
-    # 檢查事件是來自個人還是群組
     if event.source.type == 'user':
         id = event.source.user_id
     elif event.source.type == 'group':
@@ -35,7 +34,7 @@ def handle_message(event):
         id = None
 
     if id:
-        user_ids.add(id)  # 假設 user_ids 用於存儲個人和群組的 ID
+        user_ids.add(id)
 
     if event.message.text == "救救啟瑞":
         start_scheduled_task()
@@ -43,9 +42,11 @@ def handle_message(event):
         reply_message(channel_access_token, event.reply_token, reply_text, configuration)
     else:
         reply_text = "請輸入'救救啟瑞'以開始任務。"
-        # 使用reply_message函數回覆純文字訊息
-        line_bot_api = LineBotApi(channel_access_token)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+        reply_message(channel_access_token, event.reply_token, reply_text, configuration)
+
+
+
+
 
 def start_scheduled_task():
     global job
