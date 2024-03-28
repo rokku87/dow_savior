@@ -1,7 +1,8 @@
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from linebot.models import TemplateSendMessage, ConfirmTemplate, MessageAction
+from linebot import LineBotApi
+from linebot.models import TemplateSendMessage, ConfirmTemplate, MessageAction, TextSendMessage
 from flask import Flask, request, abort
 from apscheduler.schedulers.background import BackgroundScheduler
 from linebot.v3.webhook import WebhookHandler
@@ -10,6 +11,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.messaging import Configuration
 from api.line_api import reply_message, send_message
 from datetime import datetime, timedelta
+
 
 app = Flask(__name__)
 scheduler = BackgroundScheduler()
