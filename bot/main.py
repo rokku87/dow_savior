@@ -56,7 +56,7 @@ def send_confirmation_message():
     now = datetime.now()
     if 'next_message_time' not in globals():
         global next_message_time
-        next_message_time = now + timedelta(seconds=30)  # 首次發送，設定為30秒後
+        next_message_time = now + timedelta(seconds=10)  # 首次發送，設定為10秒後
 
     if now >= next_message_time:
         message_text = "任務-啟瑞逃離華奴腐儒輪迴\n任務一、啟瑞今天看房沒?"
