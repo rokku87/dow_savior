@@ -86,19 +86,26 @@ def send_task_message(task):
 if not scheduler.running:
     scheduler.start()
 
+
+##-----------------------------------------------------這邊不動---------------------------------------------------------
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
+
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
         app.logger.info("Invalid signature. Please check your channel access token/channel secret.")
         abort(400)
+
     return 'OK'
 
 @app.route("/health")
 def health_check():
     return "OK", 200
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, use_reloader=False)
