@@ -24,9 +24,9 @@ next_message_time = None
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    print("Received message:", event.message.text)  # 添加這行來打印接收到的訊息
     global task_active, next_message_time, current_task
-     print("Received message:", event.message.text)  # 添加這行來打印接收到的訊息
-    
+     
     user_id = event.source.user_id if event.source.type in ['user', 'group'] else None
     if user_id:
         user_ids.add(user_id)
