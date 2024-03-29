@@ -39,32 +39,40 @@ def scheduled_check_and_send_task():
 def handle_message(event):
     global task_active, current_task, next_message_time
 
-    user_id = event.source.user_id if event.source.type in ['user', 'group'] else None
-    if user_id:
-        user_ids.add(user_id)
+    # 判斷事件類型並獲取對應的ID
+    source_type = event.source.type
+    if source_type == 'user':
+        reply_id = event.source.user_id
+    elif source_type == 'group':
+        reply_id = event.source.group_id
+    else:
+        reply_id = None
 
-    if event.message.text == "救救啟瑞" and not task_active:
-        task_active = True
-        current_task = "task1"
-        next_message_time = datetime.now() + timedelta(seconds=5)
-        reply_message(channel_access_token, event.reply_token, "任務啟動。")
-        send_task_message(current_task)
-    elif event.message.text == "是" and task_active:
-        if current_task == "task1":
-            current_task = "task2"
-        send_task_message(current_task)
-    elif event.message.text == "否" and task_active:
-        task_active = False
-        current_task = None
-        reply_message(channel_access_token, event.reply_token, "任務失敗-啟瑞還在輪迴之中受難")
-    elif event.message.text == "關閉" and task_active:
-        task_active = False
-        current_task = None
-        next_message_time = None
-        reply_message(channel_access_token, event.reply_token, "任務已停止。")
+    if reply_id:
+        user_ids.add(reply_id)
 
-def send_task_message(task):
-    global user_ids, channel_access_token
+        if event.message.text == "救救啟瑞" and not task_active:
+            task_active = True
+            current_task = "task1"
+            next_message_time = datetime.now() + timedelta(seconds=5)
+            reply_message(channel_access_token, reply_id, "任務啟動。")
+            send_task_message(reply_id, current_task)
+        elif event.message.text == "是" and task_active:
+            if current_task == "task1":
+                current_task = "task2"
+            send_task_message(reply_id, current_task)
+        elif event.message.text == "否" and task_active:
+            task_active = False
+            current_task = None
+            reply_message(channel_access_token, reply_id, "任務失敗-啟瑞還在輪迴之中受難")
+        elif event.message.text == "關閉" and task_active:
+            task_active = False
+            current_task = None
+            next_message_time = None
+            reply_message(channel_access_token, reply_id, "任務已停止。")
+
+def send_task_message(reply_id, task):
+    global next_message_time
     message_text = ""
     if task == "task1":
         message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└─任務一、啟瑞今天看房沒?(0/1)"
@@ -76,8 +84,8 @@ def send_task_message(task):
         MessageAction(label="否", text="否")
     ])
     template_message = TemplateSendMessage(alt_text='確認訊息', template=confirm_template)
-    for user_id in user_ids:
-        send_message(channel_access_token, user_id, template_message)
+    send_message(channel_access_token, reply_id, template_message)
+    next_message_time = datetime.now() + timedelta(seconds=5)
 
 if not scheduler.running:
     scheduler.start()
