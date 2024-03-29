@@ -64,7 +64,7 @@ def handle_message(event):
         task_active = True
         current_task = "task1"
         next_message_time = datetime.now() + timedelta(seconds=5)
-        reply_message(channel_access_token, event.reply_token, "任務啟動。")
+        reply_message(channel_access_token, event.reply_token, "協助啟瑞逃離華奴腐儒任務，啟動。")
         send_task_message(source_id, current_task)
     elif event.message.text == "是" and task_active:
         next_task = {"task1": "task2", "task2": "task3", "task3": "task4", "task4": "task5"}
@@ -88,6 +88,17 @@ def send_task_message(target_id, task):
     global channel_access_token, source_type
     # 任务信息留空，您可以根据需要填写
     message_text = "..."
+
+    if task == "task1":
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(0/1)"
+    elif task == "task2":
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(1/1)\n└─任務2-啟瑞今天付訂沒?(0/1)"
+    elif task == "task3":
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(1/1)\n└─任務2-啟瑞今天付訂沒?(1/1)\n└──任務3-啟瑞今天整理沒?(0/1)"
+    elif task == "task4":
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(1/1)\n└─任務2-啟瑞今天付訂沒?(1/1)\n└──任務3-啟瑞今天整理沒?(1/1)\n└───任務4-啟瑞今天叫搬家沒?(0/1)"
+    elif task == "task5":
+        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(1/1)\n└─任務2-啟瑞今天付訂沒?(1/1)\n└──任務3-啟瑞今天整理沒?(1/1)\n└───任務4-啟瑞今天叫搬家沒?(1/1)\n└────任務5-啟瑞今天搬家沒?(0/1)"
 
     confirm_template = ConfirmTemplate(text=message_text, actions=[
         MessageAction(label="是", text="是"),
