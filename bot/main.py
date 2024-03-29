@@ -23,6 +23,7 @@ handler = WebhookHandler(channel_secret)
 task_active = False
 current_task = None
 next_message_time = None
+source_type = None  # 新增变量来存储触发任务的来源类型
 
 def check_and_send_task():
     global task_active, current_task, next_message_time
@@ -38,35 +39,37 @@ def scheduled_check_and_send_task():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
-    global task_active, current_task, next_message_time
+    global task_active, current_task, next_message_time, user_ids, source_type
 
-    user_id = event.source.user_id if event.source.type in ['user', 'group'] else None
-    if user_id:
-        user_ids.add(user_id)
+    source_id = event.source.user_id if event.source.type == 'user' else event.source.group_id
+    source_type = event.source.type
+
+    if source_id:
+        user_ids.add(source_id)
 
     if event.message.text == "救救啟瑞" and not task_active:
         task_active = True
         current_task = "task1"
         next_message_time = datetime.now() + timedelta(seconds=5)
         reply_message(channel_access_token, event.reply_token, "任務啟動。")
-        send_task_message(user_id, current_task)
+        send_task_message(source_id, current_task)
     elif event.message.text == "是" and task_active:
         next_task = {"task1": "task2", "task2": "task3", "task3": "task4", "task4": "task5"}
         current_task = next_task.get(current_task)
         if current_task:
-            send_task_message(user_id, current_task)
+            send_task_message(source_id, current_task)
     elif event.message.text == "否" and task_active:
         task_active = False
         current_task = None
         reply_message(channel_access_token, event.reply_token, "任務失敗-啟瑞仍在輪迴之中受難")
-    elif event.message.text == "关闭" and task_active:
+    elif event.message.text == "關閉" and task_active:
         task_active = False
         current_task = None
         next_message_time = None
         reply_message(channel_access_token, event.reply_token, "任務停止。")
 
-def send_task_message(user_id, task):
-    global channel_access_token
+def send_task_message(target_id, task):
+    global channel_access_token, source_type
     message_text = ""
     if task == "task1":
         message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(0/1)"
@@ -83,8 +86,12 @@ def send_task_message(user_id, task):
         MessageAction(label="是", text="是"),
         MessageAction(label="否", text="否")
     ])
-    template_message = TemplateSendMessage(alt_text='确认消息', template=confirm_template)
-    send_message(channel_access_token, user_id, template_message)
+    template_message = TemplateSendMessage(alt_text='確認消息', template=confirm_template)
+
+    if source_type == 'user':
+        send_message(channel_access_token, target_id, template_message)
+    elif source_type == 'group':
+        send_message(channel_access_token, target_id, template_message)
 
 if not scheduler.running:
     scheduler.start()
