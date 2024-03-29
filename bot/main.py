@@ -25,17 +25,30 @@ current_task = None
 next_message_time = None
 source_type = None  # 新增变量来存储触发任务的来源类型
 
-def check_and_send_task():
+def auto_start_task():
     global task_active, current_task, next_message_time
-    now = datetime.now()
-    if task_active and now >= next_message_time:
+    if not task_active:
+        task_active = True
+        current_task = "task1"
+        next_message_time = datetime.now() + timedelta(seconds=5)  # 调整为实际时间间隔
         for user_id in user_ids:
             send_task_message(user_id, current_task)
-        next_message_time = now + timedelta(seconds=5)  # Adjust this for actual timing
 
-@scheduler.scheduled_job('interval', seconds=5)
-def scheduled_check_and_send_task():
-    check_and_send_task()
+def auto_stop_task():
+    global task_active, current_task, next_message_time
+    if task_active:
+        task_active = False
+        current_task = None
+        next_message_time = None
+        # 这里可以添加发送任务自动停止的消息
+
+@scheduler.scheduled_job('cron', hour=12)
+def scheduled_start_task():
+    auto_start_task()
+
+@scheduler.scheduled_job('cron', hour=0)
+def scheduled_stop_task():
+    auto_stop_task()
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
@@ -58,6 +71,9 @@ def handle_message(event):
         current_task = next_task.get(current_task)
         if current_task:
             send_task_message(source_id, current_task)
+        else:
+            task_active = False  # 任务5完成后，标记任务为不活跃
+            reply_message(channel_access_token, event.reply_token, "任務成功！")
     elif event.message.text == "否" and task_active:
         task_active = False
         current_task = None
@@ -70,17 +86,8 @@ def handle_message(event):
 
 def send_task_message(target_id, task):
     global channel_access_token, source_type
-    message_text = ""
-    if task == "task1":
-        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(0/1)"
-    elif task == "task2":
-        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(1/1)\n└─任務2-啟瑞今天付訂沒?(0/1)"
-    elif task == "task3":
-        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(1/1)\n└─任務2-啟瑞今天付訂沒?(1/1)\n└──任務3-啟瑞今天整理沒?(0/1)"
-    elif task == "task4":
-        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(1/1)\n└─任務2-啟瑞今天付訂沒?(1/1)\n└──任務3-啟瑞今天整理沒?(1/1)\n└───任務4-啟瑞今天叫搬家沒?(0/1)"
-    elif task == "task5":
-        message_text = "任務-協助啟瑞逃離華奴腐儒輪迴\n└任務1-啟瑞今天看房沒?(1/1)\n└─任務2-啟瑞今天付訂沒?(1/1)\n└──任務3-啟瑞今天整理沒?(1/1)\n└───任務4-啟瑞今天叫搬家沒?(1/1)\n└────任務5-啟瑞今天搬家沒?(0/1)"
+    # 任务信息留空，您可以根据需要填写
+    message_text = "..."
 
     confirm_template = ConfirmTemplate(text=message_text, actions=[
         MessageAction(label="是", text="是"),
@@ -95,8 +102,6 @@ def send_task_message(target_id, task):
 
 if not scheduler.running:
     scheduler.start()
-
-
 
 ##-----------------------------------------------------這邊不動---------------------------------------------------------
 @app.route("/callback", methods=['POST'])
